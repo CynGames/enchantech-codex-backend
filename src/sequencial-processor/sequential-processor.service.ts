@@ -7,7 +7,7 @@ import * as cheerio from 'cheerio';
 @Injectable()
 export class SequentialProcessorService {
   private readonly logger = new Logger(SequentialProcessorService.name);
-  private readonly BATCH_SIZE = 5;
+  private readonly BATCH_SIZE = 50;
   private readonly BATCH_DELAY = 5000; // 5 seconds delay between batches
   private readonly TIMEOUT = 3000; // 3 seconds timeout
   private currentProcessing: Promise<any> | null = null;
@@ -143,9 +143,9 @@ export class SequentialProcessorService {
       }
 
       // Add delay if more batches are pending
-      if (i < totalBatches - 1) {
-        await this.delay(this.BATCH_DELAY);
-      }
+      // if (i < totalBatches - 1) {
+      //   await this.delay(this.BATCH_DELAY);
+      // }
     }
 
     return {
@@ -281,7 +281,7 @@ export class SequentialProcessorService {
     }
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
+  // private delay(ms: number): Promise<void> {
+  // return new Promise((resolve) => setTimeout(resolve, ms));
+  // }
 }
