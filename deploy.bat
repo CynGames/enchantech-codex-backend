@@ -6,9 +6,9 @@ if "%~1"=="" (
     exit /b 1
 )
 
-if "%~1"=="deploy-backend" (
+if "%~1"=="backend-deploy" (
     call :deploy_backend
-) else if "%~1"=="connect-backend" (
+) else if "%~1"=="backend-connect" (
     call :connect_backend
 ) else (
     call :show_usage

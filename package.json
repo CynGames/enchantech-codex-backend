@@ -26,7 +26,6 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/typeorm": "^10.0.2",
     "@types/xml2js": "^0.4.14",
-    "bull": "^4.16.5",
     "bullmq": "^5.35.0",
     "cheerio": "^1.0.0",
     "p-limit": "^6.2.0",

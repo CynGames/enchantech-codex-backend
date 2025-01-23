@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Publisher } from './entities/publisher.entity';
 import { Article } from '../articles/entities/article.entity';
-import { QueueProcessorService } from '../queue-processor/queue-processor.service';
+import { ArticleWorker } from '../article-processor/article.worker';
 import { SequentialProcessorService } from '../sequencial-processor/sequential-processor.service';
 
 import * as RSS from 'rss-parser';
@@ -23,7 +23,7 @@ export class RssParserService {
     private readonly publisherRepository: Repository<Publisher>,
     @InjectRepository(Article)
     private readonly articleRepository: Repository<Article>,
-    private readonly queueProcessorService: QueueProcessorService,
+    private readonly queueProcessorService: ArticleWorker,
     private readonly sequentialProcessorService: SequentialProcessorService,
   ) {
     this.parser = new RSS({
@@ -33,6 +33,14 @@ export class RssParserService {
       },
       timeout: 10000,
     });
+  }
+
+  async getPublishers(): Promise<Publisher[]> {
+    return this.publisherRepository.find();
+  }
+
+  async parseFeed(rssLink: string): Promise<RSS.Output<any>> {
+    return this.parser.parseURL(rssLink);
   }
 
   private extractOutlines(outlines: any[]): any[] {
@@ -192,87 +200,6 @@ export class RssParserService {
       throw error;
     }
   }
-
-  // private async processArticles(feed: RSS.Output<any>, publisher: Publisher) {
-  //   try {
-  //     const articleLinks = feed.items.map((item) => item.link);
-  //     const existingArticles = await this.articleRepository.find({
-  //       where: { articleLink: In(articleLinks) },
-  //       select: ['articleLink'],
-  //     });
-  //
-  //     const existingLinks = new Set(existingArticles.map((a) => a.articleLink));
-  //
-  //     const newArticles = feed.items
-  //       .filter((item) => !existingLinks.has(item.link))
-  //       .map((item) => ({
-  //         title: this.cleanHtmlContent(item.title),
-  //         description: this.cleanHtmlContent(
-  //           item.contentSnippet || item.content || '',
-  //         ),
-  //         articleLink: item.link,
-  //         imageLink: this.extractImageLink(item),
-  //         parseAttempted: false,
-  //         publisherId: Number(publisher.id.toString()),
-  //         publishedAt: new Date(item.pubDate),
-  //       }));
-  //
-  //     if (newArticles.length > 0) {
-  //       const chunks = this.chunkArray(newArticles, this.BATCH_SIZE);
-  //       for (const chunk of chunks) {
-  //         const savedArticles = await this.articleRepository.save(chunk);
-  //         await this.queueProcessorService.addArticlesToQueue(savedArticles);
-  //       }
-  //     }
-  //
-  //     return newArticles.length;
-  //   } catch (error) {
-  //     this.logger.error(
-  //       `Error processing articles for ${publisher.title}: ${error.message}`,
-  //     );
-  //     throw error;
-  //   }
-  // }
-
-  // private async processArticles(feed: RSS.Output<any>, publisher: Publisher) {
-  //   try {
-  //     const articleLinks = feed.items.map((item) => item.link);
-  //     const existingArticles = await this.articleRepository.find({
-  //       where: { articleLink: In(articleLinks) },
-  //       select: ['articleLink'],
-  //     });
-  //
-  //     const existingLinks = new Set(existingArticles.map((a) => a.articleLink));
-  //
-  //     const newArticles = feed.items
-  //       .filter((item) => !existingLinks.has(item.link))
-  //       .map((item) => ({
-  //         title: this.cleanHtmlContent(item.title),
-  //         description: this.cleanHtmlContent(
-  //           item.contentSnippet || item.content || '',
-  //         ),
-  //         articleLink: item.link,
-  //         imageLink: this.extractImageLink(item),
-  //         parseAttempted: false,
-  //         publisherId: Number(publisher.id.toString()),
-  //         publishedAt: new Date(item.pubDate),
-  //       }));
-  //
-  //     if (newArticles.length > 0) {
-  //       const savedArticles = await this.articleRepository.save(newArticles);
-  //       const results =
-  //         await this.sequentialProcessorService.processArticles(savedArticles);
-  //       return results.totalProcessed;
-  //     }
-  //
-  //     return 0;
-  //   } catch (error) {
-  //     this.logger.error(
-  //       `Error processing articles for ${publisher.title}: ${error.message}`,
-  //     );
-  //     throw error;
-  //   }
-  // }
 
   private async processArticles(feed: RSS.Output<any>, publisher: Publisher) {
     try {
