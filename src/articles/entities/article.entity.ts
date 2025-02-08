@@ -5,7 +5,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Publisher } from '../../rss-parser/entities/publisher.entity';
+import { Publisher } from './publisher.entity';
 
 @Entity({ name: 'articles' })
 export class Article {

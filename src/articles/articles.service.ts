@@ -17,7 +17,7 @@ export class ArticlesService {
   ): Promise<PaginatedResponse<Article>> {
     const {
       page = 1,
-      limit = 20,
+      limit = 21,
       title,
       description,
       publisherId,

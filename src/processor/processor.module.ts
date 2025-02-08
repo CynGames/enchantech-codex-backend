@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Article } from '../articles/entities/article.entity';
 import { ArticleWorker } from './article.worker';
-import { ArticleProcessorController } from './article.processor.controller';
-import { Publisher } from '../rss-parser/entities/publisher.entity';
-import { SequentialProcessorModule } from '../sequencial-processor/sequential-processor.module';
+import { Publisher } from '../articles/entities/publisher.entity';
 import { BullModule } from '@nestjs/bullmq';
-import { RssParserService } from '../rss-parser/rss-parser.service';
+import { PublisherParserService } from './publisher-parser.service';
+import { ProcessorController } from './processor.controller';
+import { ProcessorService } from './processor.service';
 
 @Module({
   imports: [
@@ -27,10 +27,8 @@ import { RssParserService } from '../rss-parser/rss-parser.service';
       },
     }),
     TypeOrmModule.forFeature([Article, Publisher]),
-    SequentialProcessorModule,
   ],
-  controllers: [ArticleProcessorController],
-  providers: [ArticleWorker, RssParserService],
-  exports: [ArticleWorker],
+  controllers: [ProcessorController],
+  providers: [ArticleWorker, PublisherParserService, ProcessorService],
 })
-export class ArticleProcessorModule {}
+export class ProcessorModule {}

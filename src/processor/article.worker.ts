@@ -31,6 +31,7 @@ export class ArticleWorker extends WorkerHost {
     super();
   }
 
+  // This is called as an event from the queue (process.service.ts)
   async process(job: Job<ArticleBatchJob>): Promise<any> {
     try {
       this.logger.log(`Starting job ${job.id} for ${job.data.publisher}`);

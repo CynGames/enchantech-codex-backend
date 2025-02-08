@@ -1,19 +1,36 @@
-import { Controller, Post, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
-import { RssParserService } from '../rss-parser/rss-parser.service';
 import { Queue } from 'bullmq';
+import { PublisherParserService } from './publisher-parser.service';
+import { createClient } from 'redis';
 
-@Controller('articles')
-export class ArticleProcessorController {
-  private readonly logger = new Logger(ArticleProcessorController.name);
+@Injectable()
+export class ProcessorService {
+  private readonly logger = new Logger(ProcessorService.name);
   private readonly CHUNK_SIZE = 1000;
 
   constructor(
     @InjectQueue('articles') private readonly articleQueue: Queue,
-    private readonly rssParserService: RssParserService,
+    private readonly rssParserService: PublisherParserService,
   ) {}
 
-  @Post('process-rss')
+  async flushRedis() {
+    const redisUrl = `redis://localhost:6379/0`;
+    const redisClient = createClient({ url: redisUrl });
+
+    try {
+      await redisClient.connect();
+      await redisClient.flushDb();
+
+      this.logger.log('Redis flushed successfully');
+    } catch (error) {
+      this.logger.error(`Failed to flush Redis: ${error.message}`);
+      throw new Error('Failed to flush Redis');
+    } finally {
+      await redisClient.disconnect();
+    }
+  }
+
   async processRssData() {
     try {
       this.logger.log('Starting RSS processing');
@@ -49,7 +66,7 @@ export class ArticleProcessorController {
               item.contentSnippet ||
                 item.content ||
                 item['content:encoded'] ||
-                '',
+                'No description data is available, please click the link to read more.',
             ),
             imageLink: this.extractImageLink(item),
           }));
@@ -76,7 +93,6 @@ export class ArticleProcessorController {
                   type: 'fixed',
                   delay: 1000,
                 },
-                // Add job ID for tracking
                 jobId: `${publisher.id}-chunk-${i + 1}`,
               },
             );
@@ -168,10 +184,10 @@ export class ArticleProcessorController {
   private cleanDate(dateInput: any) {
     try {
       if (!dateInput) return new Date('2010-01-01');
-      const parsed = new Date(dateInput);
-      return isNaN(parsed.getTime()) ? new Date('2010-01-01') : parsed;
+
+      return new Date(dateInput);
     } catch {
-      return new Date('2010-01-01');
+      return new Date();
     }
   }
 }
