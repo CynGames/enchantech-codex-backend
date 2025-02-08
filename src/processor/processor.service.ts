@@ -65,6 +65,7 @@ export class ProcessorService {
             description: this.cleanHtmlContent(
               item.contentSnippet ||
                 item.content ||
+                item.description ||
                 item['content:encoded'] ||
                 'No description data is available, please click the link to read more.',
             ),
@@ -169,8 +170,9 @@ export class ProcessorService {
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
       .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
 
-    return sanitized
+    const result = sanitized
       .replace(/<[^>]*>/g, ' ')
+      .replace(/&#160;/g, ' ')
       .replace(/\s+/g, ' ')
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&')
@@ -178,6 +180,10 @@ export class ProcessorService {
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .trim();
+
+    return result
+      ? result
+      : 'No description data is available, please click the link to read more.';
   }
 
   // 2010-01-01 will be my default date for invalid dates. Any modern date will clog up the UI.
